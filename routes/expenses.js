@@ -8,4 +8,10 @@ router.route("/:id").get(expenseController.getAllExpenses);
 
 router.route("/single/:id").get(expenseController.getSingleExpense);
 
+router.route("/aggregate/:id").get(expenseController.getAggregateExpenses);
+
+router.route("/expense-data/:id").get(expenseController.getExpensesData);
+
+router.route("/expensevsbudget/:id").get(expenseController.getExpenseVsBudget);
+
 module.exports = router;

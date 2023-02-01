@@ -7,7 +7,9 @@ exports.createUser = async (req, res) => {
     let { email, password, name } = req.body;
     const previousUser = await Users.findOne({ email });
     if (previousUser) {
-      return res.status(403).json("User already exists, please login");
+      return res
+        .status(403)
+        .json({ Error: "User already exists, please login" });
     }
     const hashedPassword = await bcrypt.hash(password, 12);
     const result = await Users.create({
@@ -29,16 +31,17 @@ exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
     const existingUser = await Users.findOne({ email });
-    console.log(existingUser);
     if (!existingUser) {
-      return res.json("The user does not exist, please register");
+      return res.json({ Error: "The user does not exist, please register" });
     }
     const isCorrectPassword = bcrypt.compareSync(
       password,
       existingUser.password
     );
     if (!isCorrectPassword) {
-      return res.json("The password entered is incorrect, please try again");
+      return res.json({
+        Error: "The password entered is incorrect, please try again",
+      });
     }
     const token = jwt.sign(
       { email: existingUser, id: existingUser._id },
@@ -46,6 +49,29 @@ exports.loginUser = async (req, res) => {
       { expiresIn: "1h" }
     );
     return res.json({ user: existingUser, jwt: token });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    let { email, password } = req.body;
+    const existingUser = Users.findOne({ email });
+    if (!existingUser) {
+      return res.json({ Error: "The user does not exist, please register" });
+    }
+    const newPassword = await bcrypt.hash(password, 12);
+    await Users.updateOne(
+      { email },
+      {
+        $set: {
+          password: newPassword,
+        },
+      }
+    ).then((result) => {
+      return res.status(200).json(result);
+    });
   } catch (error) {
     console.log(error);
   }

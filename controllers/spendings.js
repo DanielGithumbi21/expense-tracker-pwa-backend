@@ -2,6 +2,8 @@ const Spendings = require("../models/spendings");
 
 exports.getSingleSpending = async (req, res) => {
   try {
+    const currentUser = req.user
+    console.log(currentUser)
     await Spendings.findOne({ user: req.params.id })
       .then((result) => {
         if (!result)

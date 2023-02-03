@@ -10,8 +10,9 @@ const userRouter = require("./routes/users");
 const spendingsRouter = require("./routes/spendings");
 const expenseRouter = require("./routes/expenses");
 const incomesRouter = require("./routes/incomes");
+// "mongodb://127.0.0.1:27017/userDB"
 mongoose
-  .connect("mongodb://127.0.0.1:27017/userDB", {
+  .connect(db, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })

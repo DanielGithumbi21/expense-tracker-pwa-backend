@@ -3,7 +3,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const mongoose = require("mongoose");
 const bp = require("body-parser");
-
+require("dotenv/config");
 const port = process.env.PORT || 5000;
 const db = require("./config/db").MongoURI;
 const userRouter = require("./routes/users");

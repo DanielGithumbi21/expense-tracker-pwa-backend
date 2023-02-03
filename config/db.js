@@ -1,3 +1,3 @@
-MongoURI = `mongodb+srv://Daniel01:Daniel01@cluster0.jws5g.gcp.mongodb.net/?retryWrites=true&w=majority`;
+MongoURI = `mongodb+srv://${process.env.DB_NAME}:${process.env.DB_PASSWORD}@cluster0.jws5g.gcp.mongodb.net/?retryWrites=true&w=majority`;
 
 module.exports = { MongoURI };

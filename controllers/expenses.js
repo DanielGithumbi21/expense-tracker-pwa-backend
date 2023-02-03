@@ -3,7 +3,8 @@ const Spendings = require("../models/spendings");
 
 exports.getAllExpenses = async (req, res) => {
   try {
-    const expenses = await Expenses.find({ user: req.params.id });
+    const currentUser = req.user;
+    const expenses = await Expenses.find({ user: currentUser.id });
     if (!expenses) {
       return res
         .status(400)
@@ -32,14 +33,15 @@ exports.getSingleExpense = async (req, res) => {
 
 exports.createExpense = async (req, res) => {
   try {
-    let { name, transactionDate, description, amount, user } = req.body;
+    const currentUser = req.user;
+    let { name, transactionDate, description, amount } = req.body;
 
     const expense = await Expenses.create({
       name,
       transactionDate,
       description,
       amount,
-      user,
+      user: currentUser.id,
     });
     res.status(201).json(expense);
   } catch (error) {
@@ -49,12 +51,19 @@ exports.createExpense = async (req, res) => {
 
 exports.getAggregateExpenses = async (req, res) => {
   try {
-    Expenses.find({ user: req.params.id }).then((result) => {
-      let totalExpenses = result.reduce((a, b) => {
-        return {
-          total: a.amount + b.amount,
-        };
-      });
+    const currentUser = req.user;
+    Expenses.find({ user: currentUser.id }).then((result) => {
+      let totalExpenses = 0;
+      if (result.length === 0) {
+        totalExpenses = 0;
+      } else {
+        totalExpenses = result.reduce((a, b) => {
+          return {
+            total: a.amount + b.amount,
+          };
+        });
+      }
+
       return res.status(200).json(totalExpenses);
     });
   } catch (error) {
@@ -64,7 +73,8 @@ exports.getAggregateExpenses = async (req, res) => {
 
 exports.getExpensesData = async (req, res) => {
   try {
-    Expenses.find({ user: req.params.id }).then((result) => {
+    const currentUser = req.user;
+    Expenses.find({ user: currentUser.id }).then((result) => {
       let expenses = result.map((expense) => {
         return {
           name: expense.name,
@@ -80,14 +90,23 @@ exports.getExpensesData = async (req, res) => {
 
 exports.getExpenseVsBudget = async (req, res) => {
   try {
-    const expenses = Expenses.find({ user: req.params.id });
-    const spendings = Spendings.find({ user: req.params.id });
-    const expensesTotal = (await expenses).reduce((a, b) => {
-      const total = a.amount + b.amount;
-      return total;
-    });
+    const currentUser = req.user;
+    const expenses = Expenses.find({ user: currentUser.id });
+    const spendings = Spendings.find({ user: currentUser.id });
+
+    let expensesTotal = 0;
+
+    if ((await expenses).length === 0) {
+      expensesTotal = 0;
+    } else {
+      expensesTotal = (await expenses).reduce((a, b) => {
+        const total = a.amount + b.amount;
+        return total;
+      });
+    }
+
     const spendingsTotal = (await spendings).map((spending) => {
-      return spending.budget;
+      return spending.budget || 0;
     });
 
     const budgetLessExpense = spendingsTotal - expensesTotal;

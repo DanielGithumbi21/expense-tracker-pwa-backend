@@ -3,7 +3,8 @@ const Spendings = require("../models/spendings");
 
 exports.getAllIncomes = async (req, res) => {
   try {
-    const incomes = await Incomes.find({ user: req.params.id });
+    const currentUser = req.user;
+    const incomes = await Incomes.find({ user: currentUser.id });
     if (!incomes) {
       return res.status(400).json({ Error: "You do not have any incomes now" });
     } else {
@@ -30,14 +31,15 @@ exports.getSingleIncome = async (req, res) => {
 
 exports.createIncome = async (req, res) => {
   try {
-    let { name, transactionDate, description, amount, user } = req.body;
+    const currentUser = req.user;
+    let { name, transactionDate, description, amount } = req.body;
 
     const income = await Incomes.create({
       name,
       transactionDate,
       description,
       amount,
-      user,
+      user: currentUser.id,
     });
     res.status(201).json(income);
   } catch (error) {
@@ -46,12 +48,19 @@ exports.createIncome = async (req, res) => {
 };
 exports.getAggregateIncomes = async (req, res) => {
   try {
-    Incomes.find({ user: req.params.id }).then((result) => {
-      let totalIncomes = result.reduce((a, b) => {
-        return {
-          total: a.amount + b.amount,
-        };
-      });
+    const currentUser = req.user;
+    Incomes.find({ user: currentUser.id }).then((result) => {
+      let totalIncomes = 0;
+
+      if (result.length === 0) {
+        totalIncomes = 0;
+      } else {
+        totalIncomes = reduce((a, b) => {
+          return {
+            total: a.amount + b.amount,
+          };
+        });
+      }
       return res.status(200).json(totalIncomes);
     });
   } catch (error) {
@@ -61,7 +70,8 @@ exports.getAggregateIncomes = async (req, res) => {
 
 exports.getIncomesData = async (req, res) => {
   try {
-    Incomes.find({ user: req.params.id }).then((result) => {
+    const currentUser = req.user;
+    Incomes.find({ user: currentUser.id }).then((result) => {
       let incomes = result.map((income) => {
         return {
           name: income.name,
@@ -76,14 +86,20 @@ exports.getIncomesData = async (req, res) => {
 };
 exports.getIncomeVsTargetedIncome = async (req, res) => {
   try {
-    const incomes = Incomes.find({ user: req.params.id });
-    const spendings = Spendings.find({ user: req.params.id });
-    const incomesTotal = (await incomes).reduce((a, b) => {
-      const total = a.amount + b.amount;
-      return total;
-    });
+    const currentUser = req.user;
+    const incomes = Incomes.find({ user: currentUser.id });
+    const spendings = Spendings.find({ user: currentUser.id });
+    let incomesTotal = 0;
+    if (incomes.length === 0) {
+      incomesTotal = 0;
+    } else {
+      incomesTotal = await incomes.reduce((a, b) => {
+        const total = a.amount + b.amount;
+        return total;
+      });
+    }
     const spendingsTotal = (await spendings).map((spending) => {
-      return spending.income;
+      return spending.income || 0;
     });
 
     const targetedIncomeLessIncome = spendingsTotal - incomesTotal;

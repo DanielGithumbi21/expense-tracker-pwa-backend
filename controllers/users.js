@@ -24,7 +24,7 @@ exports.createUser = async (req, res) => {
       }
     );
 
-    return res.status(201).json({ result, token });
+    return res.status(201).json({ user:result, jwt:token });
   } catch (error) {
     console.log(error);
   }
@@ -53,7 +53,7 @@ exports.loginUser = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
-    return res.json({ user: existingUser, jwt: token });
+    return res.status(200).json({ user: existingUser, jwt: token });
   } catch (error) {
     console.log(error);
   }

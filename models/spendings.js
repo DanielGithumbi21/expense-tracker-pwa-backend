@@ -3,10 +3,6 @@ const mongoose = require("mongoose");
 const spendingSchema = mongoose.Schema({
   income: Number,
   budget: Number,
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "ExpenseTrackerUsers",
-  },
   createdAt: {
     type: Date,
     default: Date.now(),

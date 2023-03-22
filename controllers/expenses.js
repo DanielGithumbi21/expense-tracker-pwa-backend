@@ -34,13 +34,14 @@ exports.getSingleExpense = async (req, res) => {
 exports.createExpense = async (req, res) => {
   try {
     const currentUser = req.user;
-    let { name, transactionDate, description, amount } = req.body;
+    let { name, transactionDate, description, amount, category } = req.body;
 
     const expense = await Expenses.create({
       name,
       transactionDate,
       description,
       amount,
+      category,
       user: currentUser.id,
     });
     res.status(201).json(expense);
@@ -58,13 +59,11 @@ exports.getAggregateExpenses = async (req, res) => {
         totalExpenses = 0;
       } else {
         totalExpenses = result.reduce((a, b) => {
-          return {
-            total: a.amount + b.amount,
-          };
-        });
+          return a + b.amount;
+        }, 0);
       }
 
-      return res.status(200).json(totalExpenses);
+      return res.status(200).json({ totalExpenses });
     });
   } catch (error) {
     console.log(error);
@@ -75,12 +74,16 @@ exports.getExpensesData = async (req, res) => {
   try {
     const currentUser = req.user;
     Expenses.find({ user: currentUser.id }).then((result) => {
-      let expenses = result.map((expense) => {
-        return {
-          name: expense.name,
-          amount: expense.amount,
-        };
-      });
+      let expenses = Object.entries(
+        result.reduce((acc, curr) => {
+          if (!acc[curr.category]) {
+            acc[curr.category] = curr.amount;
+          } else {
+            acc[curr.category] += curr.amount;
+          }
+          return acc;
+        }, {})
+      ).map(([category, amount]) => ({ category, amount }));
       return res.status(200).json(expenses);
     });
   } catch (error) {

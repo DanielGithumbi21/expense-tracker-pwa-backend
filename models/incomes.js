@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const incomeSchema = mongoose.Schema({
   name: String,
   transactionDate: Date,
+  category: String,
   amount: Number,
   description: String,
   user: {

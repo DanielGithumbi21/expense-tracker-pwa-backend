@@ -32,13 +32,14 @@ exports.getSingleIncome = async (req, res) => {
 exports.createIncome = async (req, res) => {
   try {
     const currentUser = req.user;
-    let { name, transactionDate, description, amount } = req.body;
+    let { name, transactionDate, description, amount, category } = req.body;
 
     const income = await Incomes.create({
       name,
       transactionDate,
       description,
       amount,
+      category,
       user: currentUser.id,
     });
     res.status(201).json(income);
@@ -51,17 +52,14 @@ exports.getAggregateIncomes = async (req, res) => {
     const currentUser = req.user;
     Incomes.find({ user: currentUser.id }).then((result) => {
       let totalIncomes = 0;
-
       if (result.length === 0) {
         totalIncomes = 0;
       } else {
-        totalIncomes = reduce((a, b) => {
-          return {
-            total: a.amount + b.amount,
-          };
-        });
+        totalIncomes = result.reduce((a, b) => {
+          return a + b.amount;
+        }, 0);
       }
-      return res.status(200).json(totalIncomes);
+      return res.status(200).json({ totalIncomes });
     });
   } catch (error) {
     console.log(error);
@@ -72,12 +70,16 @@ exports.getIncomesData = async (req, res) => {
   try {
     const currentUser = req.user;
     Incomes.find({ user: currentUser.id }).then((result) => {
-      let incomes = result.map((income) => {
-        return {
-          name: income.name,
-          amount: income.amount,
-        };
-      });
+      let incomes = Object.entries(
+        result.reduce((acc, curr) => {
+          if (!acc[curr.category]) {
+            acc[curr.category] = curr.amount;
+          } else {
+            acc[curr.category] += curr.amount;
+          }
+          return acc;
+        }, {})
+      ).map(([category, amount]) => ({ category, amount }));
       return res.status(200).json(incomes);
     });
   } catch (error) {
